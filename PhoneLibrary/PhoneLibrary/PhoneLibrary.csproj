@@ -58,6 +58,7 @@
     <Compile Include="service\CategoryService.cs" />
     <Compile Include="service\CharacteristicService.cs" />
     <Compile Include="service\CommentService.cs" />
+    <Compile Include="service\EntityChangedEventArgs.cs" />
     <Compile Include="service\PhoneService.cs" />
     <Compile Include="service\PresetService.cs" />
     <Compile Include="service\ProducerService.cs" />

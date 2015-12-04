@@ -37,7 +37,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -53,15 +55,24 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CategoryServiceAsyncTests.cs" />
+    <Compile Include="CharacteristicServiceAsyncTests.cs" />
     <Compile Include="CharacteristicServiceTests.cs" />
+    <Compile Include="CommentServiceAsyncTests.cs" />
     <Compile Include="CommentServiceTests.cs" />
+    <Compile Include="PhoneServiceAsyncTests.cs" />
     <Compile Include="PhoneServiceTests.cs" />
+    <Compile Include="PresetServiceAsyncTests.cs" />
+    <Compile Include="ProducerServiceAsyncTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CategoryServiceTests.cs" />
     <Compile Include="PresetServiceTests.cs" />
+    <Compile Include="ShopServiceAsyncTests.cs" />
     <Compile Include="ShopServiceTests.cs" />
+    <Compile Include="SpecificationServiceAsyncTests.cs" />
     <Compile Include="SpecificationServiceTests.cs" />
     <Compile Include="ProducerServiceTests.cs" />
+    <Compile Include="UserServiceAsyncTests.cs" />
     <Compile Include="UserServiceTests.cs" />
   </ItemGroup>
   <ItemGroup>

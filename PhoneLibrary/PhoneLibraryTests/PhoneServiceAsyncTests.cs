@@ -1,33 +1,32 @@
 ﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PhoneLibrary.service;
 using PhoneLibrary.model;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PhoneLibraryTests
 {
     [TestClass]
-    public class PhoneServiceTests
+    public class PhoneServiceAsyncTests
     {
         private readonly PhoneService service;
 
-        public PhoneServiceTests()
+        public PhoneServiceAsyncTests()
         {
             this.service = new PhoneService();
-            service.Add(new Phone { Description = "firstPhone", Model = "1", Type = "monoblock" });
-            service.Add(new Phone { Description = "secondPhone", Model = "2", Type = "slider" });
+            service.AddAsync(new Phone { Description = "firstPhone", Model = "1", Type = "monoblock" }).Wait();
+            service.AddAsync(new Phone { Description = "secondPhone", Model = "2", Type = "slider" }).Wait();
         }
 
         [TestMethod]
-        public void AddTest()
+        public void AddAsyncTest()
         {
             string description = Guid.NewGuid().ToString();
             string model = Guid.NewGuid().ToString();
             string type = Guid.NewGuid().ToString();
             Phone newPhone = new Phone { Description = description, Type = type, Model = model };
-            Phone addedPhone = service.Add(newPhone);
+            Phone addedPhone = service.AddAsync(newPhone).Result;
             Assert.IsNotNull(addedPhone);
             Assert.IsTrue(addedPhone.Id > 0);
             Assert.AreEqual(addedPhone.Description, description);
@@ -36,52 +35,52 @@ namespace PhoneLibraryTests
         }
 
         [TestMethod]
-        public void GetByIdTest()
+        public void GetAsyncByIdTest()
         {
-            Phone phone = service.Get(1);
+            Phone phone = service.GetAsync(1).Result;
             Assert.IsNotNull(phone);
             Assert.AreEqual(phone.Id, 1);
         }
 
         [TestMethod]
-        public void GetByIdEditTest()
+        public void GetAsyncByIdEditTest()
         {
-            Phone phone = service.Get(1);
+            Phone phone = service.GetAsync(1).Result;
             string description = phone.Description;
             string model = phone.Model;
             string type = phone.Type;
             phone.Description = Guid.NewGuid().ToString();
             phone.Model = Guid.NewGuid().ToString();
             phone.Type = Guid.NewGuid().ToString();
-            Phone newPhone = service.Get(1);
+            Phone newPhone = service.GetAsync(1).Result;
             Assert.AreEqual(newPhone.Description, description);
             Assert.AreEqual(newPhone.Model, model);
         }
 
         [TestMethod]
-        public void GetByIdNotFoundTest()
+        public void GetAsyncByIdNotFoundTest()
         {
-            Phone phone = service.Get(int.MaxValue);
+            Phone phone = service.GetAsync(int.MaxValue).Result;
             Assert.IsNull(phone);
         }
 
         [TestMethod]
-        public void GetAllTest()
+        public void GetAsyncAllTest()
         {
-            List<Phone> phones = service.Get();
+            List<Phone> phones = service.GetAsync().Result;
             Assert.IsNotNull(phones);
             Assert.IsTrue(phones.Count > 0);
         }
 
         [TestMethod]
-        public void UpdateTest()
+        public void UpdateAsyncTest()
         {
-            Phone phone = service.Get().First();
+            Phone phone = service.GetAsync().Result.First();
             phone.Description += "upd";
             phone.Model += "upd";
             phone.Type += "upd";
-            service.Update(phone);
-            Phone updatedPhone = service.Get(phone.Id);
+            service.UpdateAsync(phone).Wait();
+            Phone updatedPhone = service.GetAsync(phone.Id).Result;
             Assert.IsNotNull(updatedPhone);
             Assert.AreEqual(updatedPhone.Description, phone.Description);
             Assert.AreEqual(updatedPhone.Model, phone.Model);
@@ -89,26 +88,26 @@ namespace PhoneLibraryTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(NullReferenceException))]
-        public void UpdateNotFoundTest()
+        [ExpectedException(typeof(AggregateException))]
+        public void UpdateAsyncNotFoundTest()
         {
-            service.Update(new Phone { Id = int.MaxValue });
+            service.UpdateAsync(new Phone { Id = int.MaxValue }).Wait();
         }
 
         [TestMethod]
-        public void DeleteTest()
+        public void DeleteAsyncTest()
         {
-            Phone phone = service.Get().Last();
-            service.Delete(phone.Id);
-            Phone deletedPhone = service.Get(phone.Id);
+            Phone phone = service.GetAsync().Result.Last();
+            service.DeleteAsync(phone.Id).Wait();
+            Phone deletedPhone = service.GetAsync(phone.Id).Result;
             Assert.IsNull(deletedPhone);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(NullReferenceException))]
-        public void DeleteNotFoundTest()
+        [ExpectedException(typeof(AggregateException))]
+        public void DeleteAsyncNotFoundTest()
         {
-            service.Delete(int.MaxValue);
+            service.DeleteAsync(int.MaxValue).Wait();
         }
     }
 }

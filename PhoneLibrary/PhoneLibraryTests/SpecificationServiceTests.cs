@@ -77,7 +77,7 @@ namespace PhoneLibraryTests
 
         [TestMethod]
         [ExpectedException(typeof(NullReferenceException))]
-        public void UpdadeNotFoundTest()
+        public void UpdateNotFoundTest()
         {
             service.Update(new Specification { Id = int.MaxValue });
         }

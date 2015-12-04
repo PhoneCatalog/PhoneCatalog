@@ -1,40 +1,33 @@
 ﻿using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PhoneLibrary.service;
 using PhoneLibrary.model;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PhoneLibraryTests
 {
     [TestClass]
-    public class UserServiceTests
+    public class UserServiceAsyncTests
     {
         private readonly UserService service;
 
-        public UserServiceTests()
+        public UserServiceAsyncTests()
         {
-            this.service = new UserService();            
-            service.Add(new User { Login = "user_1", Password = "p1", Email = "u_1.@mail.com", PhoneNumber = "111-00-11" });
-            service.Add(new User { Login = "user_2", Password = "p2", Email = "u_2.@mail.com", PhoneNumber = "222-00-22" });
+            this.service = new UserService();
+            service.AddAsync(new User { Login = "user_1", Password = "p1", Email = "u_1.@mail.com", PhoneNumber = "111-00-11" }).Wait();
+            service.AddAsync(new User { Login = "user_2", Password = "p2", Email = "u_2.@mail.com", PhoneNumber = "222-00-22" }).Wait();
         }
 
         [TestMethod]
-        public void AddTest()
+        public void AddAsyncTest()
         {
             string login = Guid.NewGuid().ToString();
-
-            service.OnAdded += (args) =>
-            {
-                Assert.AreEqual(login, args.Entity.Login);
-            };
-
             string password = Guid.NewGuid().ToString();
             string email = Guid.NewGuid().ToString();
             string phoneNumber = Guid.NewGuid().ToString();
             User newUser = new User { Email = email, Login = login, Password = password, PhoneNumber = phoneNumber };
-            User addedUser = service.Add(newUser);
+            User addedUser = service.AddAsync(newUser).Result;
             Assert.IsNotNull(addedUser);
             Assert.IsTrue(addedUser.Id > 0);
             Assert.AreEqual(addedUser.Email, email);
@@ -44,17 +37,17 @@ namespace PhoneLibraryTests
         }
 
         [TestMethod]
-        public void GetByIdTest()
+        public void GetAsyncByIdTest()
         {
-            User user = service.Get(1);
+            User user = service.GetAsync(1).Result;
             Assert.IsNotNull(user);
             Assert.AreEqual(user.Id, 1);
         }
 
         [TestMethod]
-        public void GetByIdEditTest()
+        public void GetAsyncByIdEditTest()
         {
-            User user = service.Get(1);
+            User user = service.GetAsync(1).Result;
             string login = user.Login;
             string password = user.Password;
             string email = user.Email;
@@ -63,7 +56,7 @@ namespace PhoneLibraryTests
             user.Password = Guid.NewGuid().ToString();
             user.Email = Guid.NewGuid().ToString();
             user.PhoneNumber = Guid.NewGuid().ToString();
-            User newUser = service.Get(1);
+            User newUser = service.GetAsync(1).Result;
             Assert.AreEqual(newUser.Login, login);
             Assert.AreEqual(newUser.Password, password);
             Assert.AreEqual(newUser.Email, email);
@@ -71,30 +64,30 @@ namespace PhoneLibraryTests
         }
 
         [TestMethod]
-        public void GetByIdNotFoundTest()
+        public void GetAsyncByIdNotFoundTest()
         {
-            User user = service.Get(int.MaxValue);
+            User user = service.GetAsync(int.MaxValue).Result;
             Assert.IsNull(user);
         }
 
         [TestMethod]
-        public void GetAllTest()
+        public void GetAsyncAllTest()
         {
-            List<User> users = service.Get();
+            List<User> users = service.GetAsync().Result;
             Assert.IsNotNull(users);
             Assert.IsTrue(users.Count > 0);
         }
 
         [TestMethod]
-        public void UpdateTest()
+        public void UpdateAsyncTest()
         {
-            User user = service.Get().First();
+            User user = service.GetAsync().Result.First();
             user.Email += "upd";
             user.Login += "upd";
             user.Password += "upd";
             user.PhoneNumber += "upd";
-            service.Update(user);
-            User updatedUser = service.Get(user.Id);
+            service.UpdateAsync(user).Wait();
+            User updatedUser = service.GetAsync(user.Id).Result;
             Assert.IsNotNull(updatedUser);
             Assert.AreEqual(updatedUser.Email, user.Email);
             Assert.AreEqual(updatedUser.Login, user.Login);
@@ -103,26 +96,26 @@ namespace PhoneLibraryTests
         }
 
         [TestMethod]
-        [ExpectedException(typeof(NullReferenceException))]
-        public void UpdateNotFoundTest()
+        [ExpectedException(typeof(AggregateException))]
+        public void UpdateAsyncNotFoundTest()
         {
-            service.Update(new User { Id = int.MaxValue });
+            service.UpdateAsync(new User { Id = int.MaxValue }).Wait();
         }
 
         [TestMethod]
-        public void DeleteTest()
+        public void DeleteAsyncTest()
         {
-            User user = service.Get().Last();
-            service.Delete(user.Id);
-            User deletedUser = service.Get(user.Id);
+            User user = service.GetAsync().Result.Last();
+            service.DeleteAsync(user.Id).Wait();
+            User deletedUser = service.GetAsync(user.Id).Result;
             Assert.IsNull(deletedUser);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(NullReferenceException))]
-        public void DeleteNotFoundTest()
+        [ExpectedException(typeof(AggregateException))]
+        public void DeleteAsyncNotFoundTest()
         {
-            service.Delete(int.MaxValue);
+            service.DeleteAsync(int.MaxValue).Wait();
         }
     }
 }
