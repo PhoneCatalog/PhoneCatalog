@@ -12,11 +12,11 @@ namespace PhoneLibrary.service
     public class UserService : IServiceAsync<User>
     {
         public delegate void EntityChanged<TEntity>(EntityChangedEventArgs<TEntity> entity);
-
+                
         public event EntityChanged<User> OnAdded;
         public event EntityChanged<User> OnGot;
         public event EntityChanged<List<User>> OnAllGot;
-        public event EntityChanged<User> OnDeteted;
+        public event EntityChanged<User> OnDeleted;
         public event EntityChanged<User> OnUpdated;
 
         private static List<User> users = new List<User>();
@@ -54,7 +54,7 @@ namespace PhoneLibrary.service
         public void Delete(int id)
         {
             User user = users.SingleOrDefault(item => item.Id == id);
-            OnDeteted(new EntityChangedEventArgs<User>(user));
+            OnDeleted(new EntityChangedEventArgs<User>(user));
             if (user == null) throw new NullReferenceException();
             users.Remove(user);
         }
@@ -62,6 +62,7 @@ namespace PhoneLibrary.service
         public User Update(User newUser)
         {
             User oldUser = users.SingleOrDefault(item => item.Id == newUser.Id);
+            OnUpdated(new EntityChangedEventArgs<User>(oldUser));
             if (oldUser == null) throw new NullReferenceException();
             oldUser.Email = newUser.Email;
             oldUser.Login = newUser.Login;

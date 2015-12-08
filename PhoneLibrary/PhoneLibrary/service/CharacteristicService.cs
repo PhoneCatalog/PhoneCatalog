@@ -11,25 +11,45 @@ namespace PhoneLibrary.service
 {
     public class CharacteristicService : IServiceAsync<Characteristic>
     {
+        public delegate void EntityChanged<TEntity>(EntityChangedEventArgs<TEntity> entity);
+
+        public event EntityChanged<Characteristic> OnAdded;
+        public event EntityChanged<Characteristic> OnGot;
+        public event EntityChanged<List<Characteristic>> OnAllGot;
+        public event EntityChanged<List<Characteristic>> OnGotByPhoneId;
+        public event EntityChanged<Characteristic> OnDeleted;
+        public event EntityChanged<Characteristic> OnUpdated;
+
         private static List<Characteristic> characteristics = new List<Characteristic>();
 
         public Characteristic Get(int id)
         {
             for (int i = 0; i < characteristics.Count; i++)
-                if (characteristics[i].Id == id) return (Characteristic)characteristics[i].Clone();
+                if (characteristics[i].Id == id)
+                {
+                    Characteristic found = (Characteristic)characteristics[i].Clone();
+                    OnGot(new EntityChangedEventArgs<Characteristic>(found));
+                    return found;
+                }
+            OnGot(new EntityChangedEventArgs<Characteristic>(null));
             return null;
         }
 
         public List<Characteristic> Get()
         {
-            return characteristics.Select(characteristic => (Characteristic)characteristic.Clone()).ToList();
+            List<Characteristic> copiedCharacteristics = characteristics
+                .Select(characteristic => (Characteristic)characteristic.Clone()).ToList();
+            OnAllGot(new EntityChangedEventArgs<List<Characteristic>>(copiedCharacteristics));
+            return copiedCharacteristics;
         }
 
         public List<Characteristic> GetByPhoneId(int phoneId)
         {
-            return characteristics
+            List<Characteristic> copiedCharacteristics = characteristics
                 .Where(characteristic => characteristic.PhoneId == phoneId)
                 .Select(characteristic => (Characteristic)characteristic.Clone()).ToList();
+            OnGotByPhoneId(new EntityChangedEventArgs<List<Characteristic>>(copiedCharacteristics));
+            return copiedCharacteristics;
         }
 
         public Characteristic Add(Characteristic newCharacteristic)
@@ -38,12 +58,14 @@ namespace PhoneLibrary.service
                 newCharacteristic.Id = characteristics.Max(characteristic => characteristic.Id) + 1;
             else newCharacteristic.Id = 1;
             characteristics.Add(newCharacteristic);
+            OnAdded(new EntityChangedEventArgs<Characteristic>(newCharacteristic));
             return (Characteristic)newCharacteristic.Clone();
         }
 
         public void Delete(int id)
         {
             Characteristic characteristic = characteristics.SingleOrDefault(item => item.Id == id);
+            OnDeleted(new EntityChangedEventArgs<Characteristic>(characteristic));
             if (characteristic == null) throw new NullReferenceException();
             characteristics.Remove(characteristic);
         }
@@ -51,6 +73,7 @@ namespace PhoneLibrary.service
         public Characteristic Update(Characteristic newCharacteristic)
         {
             Characteristic oldCharacteristic = characteristics.SingleOrDefault(item => item.Id == newCharacteristic.Id);
+            OnUpdated(new EntityChangedEventArgs<Characteristic>(oldCharacteristic));
             if (oldCharacteristic == null) throw new NullReferenceException();
             oldCharacteristic.Specification = newCharacteristic.Specification;
             oldCharacteristic.Value = newCharacteristic.Value;

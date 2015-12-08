@@ -16,6 +16,10 @@ namespace PhoneLibraryTests
         public PresetServiceTests()
         {
             this.service = new PresetService();
+            service.OnAdded += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
             service.Add(new Preset { Value = "Red" });
             service.Add(new Preset { Value = "White" });
         }
@@ -24,6 +28,10 @@ namespace PhoneLibraryTests
         public void AddTest()
         {
             string value = Guid.NewGuid().ToString();
+            service.OnAdded += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Value, value);
+            };
             Preset newPreset = new Preset { Value = value };
             Preset addedPreset = service.Add(newPreset);
             Assert.IsNotNull(addedPreset);
@@ -34,6 +42,10 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetByIdTest()
         {
+            service.OnGot += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Id, 1);
+            };
             Preset preset = service.Get(1);
             Assert.IsNotNull(preset);
             Assert.AreEqual(preset.Id, 1);
@@ -42,9 +54,17 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetByIdEditTest()
         {
+            service.OnGot += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Id, 1);
+            };
             Preset preset = service.Get(1);
             string value = preset.Value;
             preset.Value = Guid.NewGuid().ToString();
+            service.OnGot += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Value, value);
+            };
             Preset newPreset = service.Get(1);
             Assert.AreEqual(newPreset.Value, value);
         }
@@ -52,6 +72,10 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetByIdNotFoundTest()
         {
+            service.OnGot += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
             Preset preset = service.Get(int.MaxValue);
             Assert.IsNull(preset);
         }
@@ -59,6 +83,11 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetAllTest()
         {
+            service.OnAllGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+                Assert.IsTrue(args.Entity.Count > 0);
+            };
             List<Preset> presets = service.Get();
             Assert.IsNotNull(presets);
             Assert.IsTrue(presets.Count > 0);
@@ -67,7 +96,20 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void UpdateTest()
         {
+            service.OnAllGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
+            service.OnGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
             Preset preset = service.Get().First();
+            string oldValue = preset.Value;
+            service.OnUpdated += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Value, oldValue);
+            };
             preset.Value += "upd";
             service.Update(preset);
             Preset updatedPreset = service.Get(preset.Id);
@@ -79,12 +121,28 @@ namespace PhoneLibraryTests
         [ExpectedException(typeof(NullReferenceException))]
         public void UpdadeNotFoundTest()
         {
+            service.OnUpdated += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
             service.Update(new Preset { Id = int.MaxValue });
         }
 
         [TestMethod]
         public void DeleteTest()
         {
+            service.OnAllGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
+            service.OnGot += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
+            service.OnDeleted += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
             Preset preset = service.Get().Last();
             service.Delete(preset.Id);
             Preset deletedPreset = service.Get(preset.Id);
@@ -95,6 +153,10 @@ namespace PhoneLibraryTests
         [ExpectedException(typeof(NullReferenceException))]
         public void DeleteNotFoundTest()
         {
+            service.OnDeleted += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
             service.Delete(int.MaxValue);
         }
     }

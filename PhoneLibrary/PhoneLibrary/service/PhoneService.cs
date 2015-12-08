@@ -11,18 +11,34 @@ namespace PhoneLibrary.service
 {
     public class PhoneService : IServiceAsync<Phone>
     {
+        public delegate void EntityChanged<TEntity>(EntityChangedEventArgs<TEntity> entity);
+
+        public event EntityChanged<Phone> OnAdded;
+        public event EntityChanged<Phone> OnGot;
+        public event EntityChanged<List<Phone>> OnAllGot;
+        public event EntityChanged<Phone> OnDeleted;
+        public event EntityChanged<Phone> OnUpdated;
+
         private static List<Phone> phones = new List<Phone>();
 
         public Phone Get(int id)
         {
             for (int i = 0; i < phones.Count; i++)
-                if (phones[i].Id == id) return (Phone)phones[i].Clone();
+                if (phones[i].Id == id)
+                {
+                    Phone found = (Phone)phones[i].Clone();
+                    OnGot(new EntityChangedEventArgs<Phone>(found));
+                    return found;
+                }
+            OnGot(new EntityChangedEventArgs<Phone>(null));
             return null;
         }
 
         public List<Phone> Get()
         {
-            return phones.Select(phone => (Phone)phone.Clone()).ToList();
+            List<Phone> copiedPhones = phones.Select(phone => (Phone)phone.Clone()).ToList();
+            OnAllGot(new EntityChangedEventArgs<List<Phone>>(copiedPhones));
+            return copiedPhones;
         }
 
         public Phone Add(Phone newPhone)
@@ -31,12 +47,14 @@ namespace PhoneLibrary.service
                 newPhone.Id = phones.Max(Phone => Phone.Id) + 1;
             else newPhone.Id = 1;
             phones.Add(newPhone);
+            OnAdded(new EntityChangedEventArgs<Phone>(newPhone));
             return (Phone)newPhone.Clone();
         }
 
         public void Delete(int id)
         {
             Phone phone = phones.SingleOrDefault(item => item.Id == id);
+            OnDeleted(new EntityChangedEventArgs<Phone>(phone));
             if (phone == null) throw new NullReferenceException();
             phones.Remove(phone);
         }
@@ -44,6 +62,7 @@ namespace PhoneLibrary.service
         public Phone Update(Phone newPhone)
         {
             Phone oldPhone = phones.SingleOrDefault(item => item.Id == newPhone.Id);
+            OnUpdated(new EntityChangedEventArgs<Phone>(oldPhone));
             if (oldPhone == null) throw new NullReferenceException();
             oldPhone.Model = newPhone.Model;
             oldPhone.PhoneProducer = newPhone.PhoneProducer;

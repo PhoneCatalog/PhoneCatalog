@@ -16,6 +16,10 @@ namespace PhoneLibraryTests
         public ProducerServiceTests()
         {
             this.service = new ProducerService();
+            service.OnAdded += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
             service.Add(new Producer { Name = "Lenovo", Country = "China", Site = "lenovo.com" });
             service.Add(new Producer { Name = "Asus", Country = "China", Site = "asus.com" });
         }
@@ -26,6 +30,12 @@ namespace PhoneLibraryTests
             string name = Guid.NewGuid().ToString();
             string country = Guid.NewGuid().ToString();
             string site = Guid.NewGuid().ToString();
+            service.OnAdded += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Name, name);
+                Assert.AreEqual(args.Entity.Country, country);
+                Assert.AreEqual(args.Entity.Site, site);
+            };
             Producer newProducer = new Producer { Country = country, Name = name, Site = site };
             Producer addedProducer = service.Add(newProducer);
             Assert.IsNotNull(addedProducer);
@@ -38,6 +48,10 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetByIdTest()
         {
+            service.OnGot += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Id, 1);
+            };
             Producer producer = service.Get(1);
             Assert.IsNotNull(producer);
             Assert.AreEqual(producer.Id, 1);
@@ -46,6 +60,10 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetByIdEditTest()
         {
+            service.OnGot += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Id, 1);
+            };
             Producer producer = service.Get(1);
             string name = producer.Name;
             string country = producer.Country;
@@ -53,6 +71,10 @@ namespace PhoneLibraryTests
             producer.Name = Guid.NewGuid().ToString();
             producer.Country = Guid.NewGuid().ToString();
             producer.Site = Guid.NewGuid().ToString();
+            service.OnGot += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Name, name);
+            };
             Producer newProducer = service.Get(1);
             Assert.AreEqual(newProducer.Name, name);
             Assert.AreEqual(newProducer.Country, country);
@@ -62,6 +84,10 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetByIdNotFoundTest()
         {
+            service.OnGot += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
             Producer producer = service.Get(int.MaxValue);
             Assert.IsNull(producer);
         }
@@ -69,6 +95,11 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetAllTest()
         {
+            service.OnAllGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+                Assert.IsTrue(args.Entity.Count > 0);
+            };
             List<Producer> producers = service.Get();
             Assert.IsNotNull(producers);
             Assert.IsTrue(producers.Count > 0);
@@ -77,7 +108,20 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void UpdateTest()
         {
+            service.OnAllGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
+            service.OnGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
             Producer producer = service.Get().First();
+            string oldName = producer.Name;
+            service.OnUpdated += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Name, oldName);
+            };
             producer.Name += "upd";
             producer.Country += "upd";
             producer.Site += "upd";
@@ -93,12 +137,28 @@ namespace PhoneLibraryTests
         [ExpectedException(typeof(NullReferenceException))]
         public void UpdateNotFoundTest()
         {
+            service.OnUpdated += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
             service.Update(new Producer { Id = int.MaxValue, Country = "new", Name = "new", Site = "new" });
         }
 
         [TestMethod]
         public void DeleteTest()
         {
+            service.OnAllGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
+            service.OnGot += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
+            service.OnDeleted += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
             Producer producer = service.Get().Last();
             service.Delete(producer.Id);
             Producer deletedProducer = service.Get(producer.Id);
@@ -109,6 +169,10 @@ namespace PhoneLibraryTests
         [ExpectedException(typeof(NullReferenceException))]
         public void DeleteNotFoundTest()
         {
+            service.OnDeleted += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
             service.Delete(int.MaxValue);
         }
     }

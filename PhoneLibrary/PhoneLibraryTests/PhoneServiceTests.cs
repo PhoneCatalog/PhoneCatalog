@@ -16,6 +16,10 @@ namespace PhoneLibraryTests
         public PhoneServiceTests()
         {
             this.service = new PhoneService();
+            service.OnAdded += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
             service.Add(new Phone { Description = "firstPhone", Model = "1", Type = "monoblock" });
             service.Add(new Phone { Description = "secondPhone", Model = "2", Type = "slider" });
         }
@@ -26,6 +30,12 @@ namespace PhoneLibraryTests
             string description = Guid.NewGuid().ToString();
             string model = Guid.NewGuid().ToString();
             string type = Guid.NewGuid().ToString();
+            service.OnAdded += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Description, description);
+                Assert.AreEqual(args.Entity.Model, model);
+                Assert.AreEqual(args.Entity.Type, type);
+            };
             Phone newPhone = new Phone { Description = description, Type = type, Model = model };
             Phone addedPhone = service.Add(newPhone);
             Assert.IsNotNull(addedPhone);
@@ -38,6 +48,10 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetByIdTest()
         {
+            service.OnGot += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Id, 1);
+            };
             Phone phone = service.Get(1);
             Assert.IsNotNull(phone);
             Assert.AreEqual(phone.Id, 1);
@@ -46,6 +60,10 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetByIdEditTest()
         {
+            service.OnGot += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Id, 1);
+            };
             Phone phone = service.Get(1);
             string description = phone.Description;
             string model = phone.Model;
@@ -53,6 +71,10 @@ namespace PhoneLibraryTests
             phone.Description = Guid.NewGuid().ToString();
             phone.Model = Guid.NewGuid().ToString();
             phone.Type = Guid.NewGuid().ToString();
+            service.OnGot += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Type, type);
+            };
             Phone newPhone = service.Get(1);
             Assert.AreEqual(newPhone.Description, description);
             Assert.AreEqual(newPhone.Model, model);
@@ -61,6 +83,10 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetByIdNotFoundTest()
         {
+            service.OnGot += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
             Phone phone = service.Get(int.MaxValue);
             Assert.IsNull(phone);
         }
@@ -68,6 +94,11 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void GetAllTest()
         {
+            service.OnAllGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+                Assert.IsTrue(args.Entity.Count > 0);
+            };
             List<Phone> phones = service.Get();
             Assert.IsNotNull(phones);
             Assert.IsTrue(phones.Count > 0);
@@ -76,7 +107,20 @@ namespace PhoneLibraryTests
         [TestMethod]
         public void UpdateTest()
         {
+            service.OnAllGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
+            service.OnGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
             Phone phone = service.Get().First();
+            string oldType = phone.Type;
+            service.OnUpdated += (args) =>
+            {
+                Assert.AreEqual(args.Entity.Type, oldType);
+            };
             phone.Description += "upd";
             phone.Model += "upd";
             phone.Type += "upd";
@@ -92,12 +136,28 @@ namespace PhoneLibraryTests
         [ExpectedException(typeof(NullReferenceException))]
         public void UpdateNotFoundTest()
         {
+            service.OnUpdated += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
             service.Update(new Phone { Id = int.MaxValue });
         }
 
         [TestMethod]
         public void DeleteTest()
         {
+            service.OnAllGot += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
+            service.OnGot += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
+            service.OnDeleted += (args) =>
+            {
+                Assert.IsNotNull(args.Entity);
+            };
             Phone phone = service.Get().Last();
             service.Delete(phone.Id);
             Phone deletedPhone = service.Get(phone.Id);
@@ -108,6 +168,10 @@ namespace PhoneLibraryTests
         [ExpectedException(typeof(NullReferenceException))]
         public void DeleteNotFoundTest()
         {
+            service.OnDeleted += (args) =>
+            {
+                Assert.IsNull(args.Entity);
+            };
             service.Delete(int.MaxValue);
         }
     }
